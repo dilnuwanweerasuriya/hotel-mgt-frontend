@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Grid,
@@ -14,10 +14,10 @@ import PersonIcon from '@mui/icons-material/Person';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import BookingList from './BookingList';
-import CreateBookingForm from './CreateBookingForm';
 import DriverManagement from './DriverManagement';
+import { taxiAPI } from '../../services/api';
 
-// Move StatCard component outside - IMPORTANT!
+// Move StatCard component outside
 const StatCard = ({ title, value, icon, color }) => (
     <Card className="hover:shadow-lg transition-shadow">
         <CardContent>
@@ -42,6 +42,27 @@ const TaxiDashboard = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [showCreateBooking, setShowCreateBooking] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [stats, setStats] = useState({
+        totalBookings: 0,
+        pendingBookings: 0,
+        availableDrivers: 0,
+        todayRevenue: 0,
+    });
+
+    // Fetch statistics
+    const fetchStats = async () => {
+        try {
+            const response = await taxiAPI.getTaxiStats();
+            setStats(response.data.data);
+        } catch (error) {
+            console.error('Error fetching taxi stats:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchStats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshKey]);
 
     const handleRefresh = () => {
         setRefreshKey(prev => prev + 1);
@@ -62,20 +83,20 @@ const TaxiDashboard = () => {
                 </Button>
             </Box>
 
-            {/* Statistics Cards */}
+            {/* Statistics Cards - NOW WITH REAL DATA */}
             <Grid container spacing={3} className="mb-6">
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Total Bookings"
-                        value="24"
+                        value={stats.totalBookings}
                         icon={<LocalTaxiIcon className="text-blue-600" fontSize="large" />}
                         color="blue"
                     />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title="Active Drivers"
-                        value="12"
+                        title="Available Drivers"
+                        value={stats.availableDrivers}
                         icon={<PersonIcon className="text-green-600" fontSize="large" />}
                         color="green"
                     />
@@ -83,7 +104,7 @@ const TaxiDashboard = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Pending Bookings"
-                        value="5"
+                        value={stats.pendingBookings}
                         icon={<PendingActionsIcon className="text-orange-600" fontSize="large" />}
                         color="orange"
                     />
@@ -91,7 +112,7 @@ const TaxiDashboard = () => {
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Today's Revenue"
-                        value="₹8,450"
+                        value={`LKR ${stats.todayRevenue}`}
                         icon={<AttachMoneyIcon className="text-purple-600" fontSize="large" />}
                         color="purple"
                     />
